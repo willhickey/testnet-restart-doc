@@ -28,27 +28,17 @@ Shred version: 4084
 Once you have created a snapshot move all the other snapshots to a backup directory, so your snapshot directory contains only
     snapshot-289624982-9CGdqTDdZ3DJqQtyohr9qX6NQbsDxfFrkm8FoWjMTrUS.tar.zst
 
-If you get an error like this:
-
-    Error: Slot 289624982 is not available
-
-Or this:
-
-    Unable to process blockstore from starting slot <slot> to 289624982; the ending slot is less than the starting slot. The starting slot will be the latest snapshot slot, or genesis if the --no-snapshot flag is specified or if no snapshots are found.
-
-Your snapshots directory contains a snapshot that is for a slot `>289624982`. If you also have a snapshot for slot `<=289624982` then move snapshots for slots `>289624982` to a backup directory and run the `agave-ledger-tool` command again. If you do not have a snapshot for slot `<=289624982` then proceed to the appendix for instructions on downloading a snapshot.
-
-If you are unable to create a snapshot proceed to the appendix for instructions on downloading a snapshot.
+If you fail to create a snapshot see the appendix for possible fixes.
 
 ## Step 3: Install patched version of the validator software
 Make sure to upgrade your software to a patched version:
 
-Agave:
-    agave-install init v2.0.7
-Frankendancer: 
-    Update to v0.112.20007
+Agave: `agave-install init v2.0.7`
 
-## Step 4: Start your validator
+Frankendancer: Update to v0.112.20007
+
+## Step 4: Update startup config and start your validator
+### Agave
 Add these arguments to your validator startup script:
 
     --wait-for-supermajority 289624982 \
@@ -56,7 +46,16 @@ Add these arguments to your validator startup script:
     --expected-bank-hash EXknCC4rNBR5SyBVrUgUB3FaoGbujPMoraEjG7C49Bdk \
 
 
-As it starts, the validator will load the snapshot for slot `289624982` and wait for 80% of the stake to come online before producing/validating new blocks.
+### Frankendancer
+Include these lines in the `[consensus]` section of your toml file:
+
+    [consensus]
+        # ...
+        wait_for_supermajority_at_slot = 289624982
+        expected_bank_hash = "EXknCC4rNBR5SyBVrUgUB3FaoGbujPMoraEjG7C49Bdk"
+        expected_shred_version = 4084
+
+After making the appropriate changes start your validator as you normally would. As it starts, the validator will load the snapshot for slot `289624982` and wait for 80% of the stake to come online before producing/validating new blocks.
 
 To confirm your restarted validator is correctly waiting for 80% stake, look for this periodic log message to confirm it is waiting:
 
@@ -73,9 +72,19 @@ Once started you should see log entries for “active stake” visible in gossip
 
 ***
 
-## Appendix (use this only if step 3 failed)
+## Appendix (use this only if step 2 failed)
 
-If you couldn’t produce your snapshot locally follow these appendix steps
+If you get an error like this:
+
+    Error: Slot 289624982 is not available
+
+Or this:
+
+    Unable to process blockstore from starting slot <slot> to 289624982; the ending slot is less than the starting slot. The starting slot will be the latest snapshot slot, or genesis if the --no-snapshot flag is specified or if no snapshots are found.
+
+Your snapshots directory contains a snapshot that is for a slot `>289624982`. If you also have a snapshot for slot `<=289624982` then move snapshots for slots `>289624982` to a backup directory and run the `agave-ledger-tool` command again. If you do not have a snapshot for slot `<=289624982` then you will need to download a snapshot
+
+If you successfully created a snapshot, resume the instructions above starting at Step 3. If you are unable to create a snapshot, follow the instructions below on downloading a snapshot.
 
 ### Step 1: Download a snapshot from a known validator
 
